@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>CampusLink - Plateforme universitaire</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: Arial, sans-serif;
+}
+
+body{
+    background:#f4f7fb;
+    color:#222;
+}
+
+header{
+    background:#0b3d91;
+    color:white;
+    padding:20px;
+    text-align:center;
+}
+
+.logo{
+    font-size:32px;
+    font-weight:bold;
+}
+
+.container{
+    width:90%;
+    max-width:1000px;
+    margin:30px auto;
+}
+
+.card{
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+    margin-bottom:20px;
+}
+
+button{
+    background:#0b3d91;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:8px;
+    cursor:pointer;
+    margin-top:15px;
+}
+
+button:hover{
+    opacity:0.85;
+}
+
+input, select{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:1px solid #ccc;
+    border-radius:8px;
+}
+
+.hidden{
+    display:none;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+}
+
+.item{
+    background:#eef3ff;
+    padding:20px;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.item:hover{
+    background:#dbe7ff;
+}
+
+.nav{
+    display:flex;
+    justify-content:space-around;
+    background:#0b3d91;
+    padding:15px;
+    color:white;
+    margin-bottom:20px;
+}
+
+.nav span{
+    cursor:pointer;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:15px;
+}
+
+th,td{
+    border:1px solid #ddd;
+    padding:10px;
+    text-align:center;
+}
+
+th{
+    background:#0b3d91;
+    color:white;
+}
+
+footer{
+    text-align:center;
+    padding:20px;
+    color:#555;
+}
+
+.badge{
+    display:inline-block;
+    background:#0b3d91;
+    color:white;
+    padding:5px 10px;
+    border-radius:20px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<header>
+<div class="logo">CampusLink</div>
+<p>La plateforme numérique universitaire du Burkina Faso</p>
+</header>
+
+
+<div class="container">
+
+
+<!-- PAGE ACCUEIL -->
+
+<div id="accueil" class="card">
+
+<h2>Bienvenue sur CampusLink</h2>
+
+<p>
+CampusLink connecte les étudiants et les établissements.
+Accédez aux informations universitaires, notes, annonces et événements.
+</p>
+
+<button onclick="ouvrirUniversite()">
+Commencer
+</button>
+
+</div>
+
+
+
+<!-- CHOIX UNIVERSITE -->
+
+<div id="universite" class="card hidden">
+
+<h2>Choisissez votre établissement</h2>
+
+<div class="grid">
+
+<div class="item" onclick="choisirUniversite('IBAM')">
+<h3>IBAM</h3>
+<p>Institut Burkinabè des Arts et Métiers</p>
+</div>
+
+
+<div class="item" onclick="choisirUniversite('Université Joseph KI-ZERBO')">
+<h3>Université Joseph KI-ZERBO</h3>
+</div>
+
+
+<div class="item" onclick="choisirUniversite('Université Thomas SANKARA')">
+<h3>Université Thomas SANKARA</h3>
+</div>
+
+
+</div>
+
+</div>
+
+
+
+
+<!-- INSCRIPTION -->
+
+<div id="inscription" class="card hidden">
+
+<h2>Inscription étudiant</h2>
+
+<p>
+Établissement :
+<span class="badge" id="nomUniversite"></span>
+</p>
+
+
+<label>Filière</label>
+
+<select id="filiere">
+
+<option>Assurance Banque Finance (ABF)</option>
+<option>Marketing</option>
+<option>Comptabilité</option>
+<option>Informatique</option>
+
+</select>
+
+
+<label>Niveau</label>
+
+<select id="niveau">
+
+<option>L1</option>
+<option>L2</option>
+<option>L3</option>
+<option>M1</option>
+<option>M2</option>
+
+</select>
+
+
+
+<input id="nom" placeholder="Nom complet">
+
+
+<input id="email" placeholder="Adresse Gmail">
+
+
+<input id="date" type="date">
+
+
+
+<button onclick="verifierEtudiant()">
+Vérifier mon identité
+</button>
+
+
+<p id="message"></p>
+
+
+</div>
