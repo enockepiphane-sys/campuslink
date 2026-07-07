@@ -590,4 +590,1055 @@ const ETABLISSEMENTS_PRIVES = [
     filieres: ["Informatique", "Gestion", "Santé", "Communication"],
     niveaux: ["L1", "L2", "L3", "M1", "M2"] },
   { id: "istic", nom: "ISTIC — Institut des Sciences et Techniques de l'Information et de la Communication", ville: "Ouagadougou", sigle: "ISTIC",
-  filieres: ["Journalisme", "Communication"]}
+  filieres: ["Journalisme", "Communication d'Entreprise", "Audiovisuel"],
+    niveaux: ["L1", "L2", "L3"] },
+  { id: "2ie", nom: "2iE — Institut International d'Ingénierie de l'Eau et de l'Environnement", ville: "Ouagadougou", sigle: "2iE",
+    filieres: ["Génie Civil", "Génie Électrique", "Eau et Assainissement", "Énergie"],
+    niveaux: ["L1", "L2", "L3", "M1", "M2"] },
+  { id: "ismp", nom: "Institut Supérieur de Management et de Pédagogie", ville: "Ouagadougou", sigle: "ISMP",
+    filieres: ["Gestion des Ressources Humaines", "Pédagogie", "Comptabilité"],
+    niveaux: ["L1", "L2", "L3"] },
+];
+
+// Base administrative simulée : liste officielle par établissement, saisie
+// par l'administration. C'est cette liste qui valide une inscription.
+const OFFICIAL_STUDENTS = {
+  ibam: [
+    { nomComplet: "Ouédraogo Epiphane", dateNaissance: "2004-03-12", filiere: "Assurance Banque Finance (ABF)", niveau: "L1" },
+    { nomComplet: "Traoré Boukary", dateNaissance: "2003-07-22", filiere: "Assurance Banque Finance (ABF)", niveau: "L1" },
+    { nomComplet: "Sawadogo Fatimata", dateNaissance: "2004-01-05", filiere: "Assurance Banque Finance (ABF)", niveau: "L1" },
+    { nomComplet: "Kaboré Issa", dateNaissance: "2002-11-30", filiere: "Marketing", niveau: "L2" },
+  ],
+  ujkz: [
+    { nomComplet: "Zongo Aminata", dateNaissance: "2003-05-18", filiere: "Droit", niveau: "L1" },
+  ],
+  uts: [
+    { nomComplet: "Compaoré Karim", dateNaissance: "2003-09-09", filiere: "Sciences Économiques", niveau: "L1" },
+  ],
+};
+
+function normalize(str) {
+  return String(str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().replace(/\s+/g, " ");
+}
+
+function findEtab(id) {
+  return [...ETABLISSEMENTS_PUBLICS, ...ETABLISSEMENTS_PRIVES].find((e) => e.id === id);
+}
+
+const initialAnnouncements = [
+  { id: 1, etabId: "ibam", filiere: "Assurance Banque Finance (ABF)", niveau: "L1", title: "Cours de Mathématiques financières déplacé", body: "Le cours du jeudi 9h est déplacé à 14h, salle B12.", time: "Il y a 2h", type: "cours" },
+  { id: 2, etabId: "ibam", filiere: "Assurance Banque Finance (ABF)", niveau: "L1", title: "Notes de Probabilités publiées", body: "Les notes du contrôle du 28 juin sont disponibles.", time: "Hier", type: "note" },
+  { id: 3, etabId: "ibam", filiere: "Assurance Banque Finance (ABF)", niveau: "L1", title: "Copies non récupérées", body: "Les copies du dernier devoir sont disponibles au secrétariat, bureau 4.", time: "Il y a 3 jours", type: "admin" },
+];
+
+const initialEvents = [
+  { id: 1, etabId: "ibam", filiere: "Assurance Banque Finance (ABF)", niveau: "L1", title: "Conférence — Métiers de la finance", date: "12 juillet 2026", lieu: "Amphi A" },
+  { id: 2, etabId: "ibam", filiere: "Assurance Banque Finance (ABF)", niveau: "L1", title: "Journée d'intégration", date: "20 juillet 2026", lieu: "Cour principale" },
+];
+
+</script>
+<script type="text/babel" data-presets="react">
+
+// -----------------------------------------------------------------------
+// Icônes — SVG inline minimalistes, pas de dépendance externe
+// -----------------------------------------------------------------------
+const Icon = ({ path, size = 18, color = "currentColor", strokeWidth = 2 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: path }} />
+);
+
+const ICONS = {
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/>',
+  lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  chevronRight: '<path d="m9 18 6-6-6-6"/>',
+  chevronLeft: '<path d="m15 18-6-6 6-6"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  graduation: '<path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1 3 2.5 6 2.5s6-1.5 6-2.5v-5"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/>',
+  chevronR: '<path d="m9 18 6-6-6-6"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/>',
+  user: '<path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/>',
+  folder: '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>',
+  party: '<path d="M5.8 11.3 2 22l10.7-3.79"/><path d="M4 3h.01M22 8h.01M15 2h.01M22 20h.01M22 2l-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/><path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17"/><path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.91 9 5.52 9 6.23V7"/>',
+  upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/>',
+  fileSheet: '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5Z"/><path d="M14 2v6h6"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>',
+  key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
+  building: '<rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/>',
+  landmark: '<path d="M3 22h18M6 18v-8M10 18v-8M14 18v-8M18 18v-8M12 2 3 7h18Z"/>',
+  arrowRight: '<path d="M5 12h14M12 5l7 7-7 7"/>',
+};
+
+const I = (name, props) => <Icon path={ICONS[name]} {...props} />;
+
+// -----------------------------------------------------------------------
+// Composants partagés
+// -----------------------------------------------------------------------
+
+function BrandMark({ size = 40 }) {
+  return (
+    <div className="brand-mark" style={{ width: size, height: size, fontSize: size * 0.42 }}>
+      CL
+    </div>
+  );
+}
+
+function EtabSeal({ etab, size = 40 }) {
+  const palette = etab.filieres.length % 2 === 0
+    ? "linear-gradient(135deg,#F2B544,#D68F1E)"
+    : "linear-gradient(135deg,#4ADE80,#2FB86A)";
+  return (
+    <div className="seal" style={{ width: size, height: size, fontSize: size * 0.32, background: palette }}>
+      {etab.sigle}
+    </div>
+  );
+}
+
+function ProgressSteps({ total, current }) {
+  return (
+    <div className="progress-track">
+      {Array.from({ length: total }).map((_, i) => (
+        <div key={i} className={"progress-seg" + (i < current ? " done" : "")} />
+      ))}
+    </div>
+  );
+}
+
+function StepShell({ children, eyebrow, wide }) {
+  return (
+    <div className="center-screen">
+      <div className="bg-glow glow-mil" />
+      <div className="bg-glow glow-harmattan" />
+      <div className="card" style={wide ? { maxWidth: 480 } : undefined}>
+        <div className="brand-row">
+          <BrandMark size={38} />
+          <span className="brand-name">CampusLink</span>
+        </div>
+        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
+        {!eyebrow && <div style={{ marginBottom: 10 }} />}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function IconField({ icon, ...props }) {
+  return (
+    <div className="input-icon-wrap">
+      {I(icon, { size: 16 })}
+      <input className="input" {...props} />
+    </div>
+  );
+}
+
+</script>
+<script type="text/babel" data-presets="react">
+
+// -----------------------------------------------------------------------
+// PORTAIL D'ENTRÉE
+// Deux portes strictement séparées dès le premier écran. Un étudiant qui
+// arrive sur CampusLink ne voit que "Espace étudiant" — il n'a aucune
+// visibilité sur l'existence d'un accès administration, et inversement.
+// Dans la vraie app, l'URL /admin (ou une app séparée) mène direct à
+// l'écran EspaceAdministration ci-dessous, sans jamais passer par ce
+// portail commun. Pour cette démo uniquement, on affiche les deux portes
+// côte à côte afin de pouvoir tester les deux parcours facilement.
+// -----------------------------------------------------------------------
+
+function EntryPortal({ onEnterStudent, onEnterAdmin }) {
+  return (
+    <div className="center-screen">
+      <div className="bg-glow glow-mil" />
+      <div className="bg-glow glow-harmattan" />
+      <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 860 }}>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+            <BrandMark size={46} />
+            <span className="brand-name" style={{ fontSize: 28 }}>CampusLink</span>
+          </div>
+          <div style={{ fontSize: 15, color: "var(--ink-dim)", maxWidth: 440, margin: "0 auto", lineHeight: 1.6 }}>
+            La plateforme qui connecte chaque étudiant à son établissement, partout au Burkina Faso.
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }} className="portal-grid">
+          <button onClick={onEnterStudent} className="portal-card">
+            <div className="portal-icon" style={{ background: "var(--mil-dim)" }}>{I("graduation", { size: 26, color: "var(--mil)" })}</div>
+            <div className="portal-title">Espace étudiant</div>
+            <div className="portal-desc">Inscrivez-vous ou connectez-vous pour accéder à vos notes, annonces et événements.</div>
+            <div className="portal-cta">Continuer {I("arrowRight", { size: 15 })}</div>
+          </button>
+
+          <button onClick={onEnterAdmin} className="portal-card">
+            <div className="portal-icon" style={{ background: "var(--harmattan-dim)" }}>{I("shield", { size: 26, color: "var(--harmattan)" })}</div>
+            <div className="portal-title">Personnel administratif</div>
+            <div className="portal-desc">Réservé aux comptes créés par votre établissement pour la gestion académique.</div>
+            <div className="portal-cta">Continuer {I("arrowRight", { size: 15 })}</div>
+          </button>
+        </div>
+
+        <div style={{ textAlign: "center", fontSize: 11, color: "var(--ink-faint)", marginTop: 28, fontFamily: "var(--font-mono)", letterSpacing: 0.03 }}>
+          Chaque établissement dispose de sa propre base — vos données ne sont jamais partagées entre écoles.
+        </div>
+      </div>
+      <style>{`
+        .portal-grid { grid-template-columns: 1fr 1fr; }
+        @media (max-width: 620px) { .portal-grid { grid-template-columns: 1fr !important; } }
+        .portal-card {
+          text-align: left; background: var(--panel); border: 1px solid var(--line);
+          border-radius: 18px; padding: 28px 26px; cursor: pointer;
+          transition: border-color 0.18s ease, transform 0.18s ease;
+        }
+        .portal-card:hover { border-color: var(--ink-faint); transform: translateY(-2px); }
+        .portal-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+        .portal-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--white); margin-bottom: 8px; }
+        .portal-desc { font-size: 13px; color: var(--ink-dim); line-height: 1.55; margin-bottom: 18px; }
+        .portal-cta { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--mil); }
+      `}</style>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------
+// PARCOURS ÉTUDIANT — accueil de l'espace étudiant (inscription / connexion)
+// -----------------------------------------------------------------------
+
+function StudentGateway({ onBack, onSignup, onLogin }) {
+  return (
+    <StepShell eyebrow="Espace étudiant">
+      <div className="subtitle">Créez votre compte ou connectez-vous à votre établissement.</div>
+      <button className="btn btn-primary btn-block" style={{ marginBottom: 10 }} onClick={onSignup}>
+        Créer mon compte étudiant
+      </button>
+      <button className="btn btn-ghost btn-block" onClick={onLogin}>
+        J'ai déjà un compte
+      </button>
+      <button onClick={onBack} style={{ background: "none", border: "none", color: "var(--ink-faint)", fontSize: 12, marginTop: 18, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+        {I("chevronLeft", { size: 13 })} Retour
+      </button>
+    </StepShell>
+  );
+}
+
+function PickEtablissement({ onBack, onPick }) {
+  const [category, setCategory] = useState("public");
+  const list = category === "public" ? ETABLISSEMENTS_PUBLICS : ETABLISSEMENTS_PRIVES;
+
+  return (
+    <StepShell eyebrow="Étape 1 sur 5 — Établissement">
+      <ProgressSteps total={5} current={1} />
+      <div className="subtitle">Sélectionnez votre établissement pour commencer votre inscription.</div>
+
+      <div className="chip-row">
+        <button className={"chip" + (category === "public" ? " active" : "")} onClick={() => setCategory("public")}>
+          Universités publiques
+        </button>
+        <button className={"chip" + (category === "prive" ? " active-alt" : "")} onClick={() => setCategory("prive")}>
+          Universités privées
+        </button>
+      </div>
+
+      <div style={{ maxHeight: 340, overflowY: "auto", paddingRight: 2 }}>
+        {list.map((e) => (
+          <button key={e.id} className="list-btn" onClick={() => onPick(e)}>
+            <EtabSeal etab={e} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{e.nom}</div>
+              <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>{e.ville}</div>
+            </div>
+            {I("chevronRight", { size: 17, color: "var(--ink-faint)" })}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ fontSize: 12, color: "var(--ink-faint)", marginTop: 14, textAlign: "center" }}>
+        Votre établissement n'apparaît pas ? D'autres écoles partenaires rejoindront bientôt CampusLink.
+      </div>
+      <button onClick={onBack} style={{ background: "none", border: "none", color: "var(--ink-faint)", fontSize: 12, marginTop: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+        {I("chevronLeft", { size: 13 })} Retour
+      </button>
+    </StepShell>
+  );
+}
+
+function PickFiliereNiveau({ etablissement, onBack, onPick }) {
+  const [filiere, setFiliere] = useState(null);
+  const [niveau, setNiveau] = useState(null);
+
+  return (
+    <StepShell eyebrow="Étape 2 sur 5 — Filière et niveau">
+      <ProgressSteps total={5} current={2} />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, background: "var(--night-2)", borderRadius: 10, padding: "10px 13px" }}>
+        <EtabSeal etab={etablissement} size={30} />
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{etablissement.nom}</span>
+      </div>
+
+      <div className="field-label">Votre filière</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 20 }}>
+        {etablissement.filieres.map((f) => (
+          <button
+            key={f}
+            onClick={() => setFiliere(f)}
+            className={"chip"}
+            style={{
+              textAlign: "left", width: "100%", borderRadius: 9,
+              background: filiere === f ? "var(--mil)" : "var(--night-2)",
+              borderColor: filiere === f ? "var(--mil)" : "var(--line)",
+              color: filiere === f ? "var(--night)" : "var(--ink-dim)",
+            }}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
+      <div className="field-label">Votre niveau</div>
+      <div className="chip-row">
+        {etablissement.niveaux.map((n) => (
+          <button
+            key={n}
+            onClick={() => setNiveau(n)}
+            className={"chip" + (niveau === n ? " active-alt" : "")}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+
+      <div className="btn-row" style={{ marginTop: 6 }}>
+        <button className="btn-icon" onClick={onBack}>{I("chevronLeft", { size: 16 })}</button>
+        <button className="btn btn-primary" disabled={!filiere || !niveau} onClick={() => onPick({ filiere, niveau })}>
+          Continuer
+        </button>
+      </div>
+    </StepShell>
+  );
+}
+
+function CreateAccountStep1({ onBack, onNext }) {
+  const [nomComplet, setNomComplet] = useState("");
+  const [gmail, setGmail] = useState("");
+  const gmailValid = /^[^\s@]+@gmail\.com$/i.test(gmail.trim());
+
+  return (
+    <StepShell eyebrow="Étape 3 sur 5 — Vos informations">
+      <ProgressSteps total={5} current={3} />
+      <div className="field-label">Nom complet</div>
+      <input className="input" style={{ marginBottom: 16 }} type="text" value={nomComplet} onChange={(e) => setNomComplet(e.target.value)} placeholder="Ex : Ouédraogo Epiphane" />
+
+      <div className="field-label">Adresse Gmail</div>
+      <IconField icon="mail" type="email" value={gmail} onChange={(e) => setGmail(e.target.value)} placeholder="prenom.nom@gmail.com" />
+      {gmail.trim() && !gmailValid && <div style={{ fontSize: 12, color: "var(--danger)", marginBottom: 10, marginTop: -4 }}>Merci d'utiliser une adresse Gmail valide.</div>}
+
+      <div className="btn-row" style={{ marginTop: 10 }}>
+        <button className="btn-icon" onClick={onBack}>{I("chevronLeft", { size: 16 })}</button>
+        <button className="btn btn-primary" disabled={!nomComplet.trim() || !gmailValid} onClick={() => onNext({ nomComplet: nomComplet.trim(), gmail: gmail.trim() })}>
+          Continuer
+        </button>
+      </div>
+    </StepShell>
+  );
+}
+
+function CreateAccountStep2({ onBack, onVerify, checking }) {
+  const [dateNaissance, setDateNaissance] = useState("");
+
+  return (
+    <StepShell eyebrow="Étape 3 sur 5 — Vérification d'identité">
+      <ProgressSteps total={5} current={3} />
+      <div className="field-label">Date de naissance</div>
+      <input className="input" style={{ marginBottom: 22 }} type="date" value={dateNaissance} onChange={(e) => setDateNaissance(e.target.value)} />
+
+      <div className="btn-row">
+        <button className="btn-icon" onClick={onBack}>{I("chevronLeft", { size: 16 })}</button>
+        <button className="btn btn-primary" disabled={!dateNaissance || checking} onClick={() => onVerify(dateNaissance)}>
+          {checking ? "Vérification en cours…" : "Vérifier mon identité"}
+        </button>
+      </div>
+    </StepShell>
+  );
+}
+
+function VerificationResult({ success, onRetry, onContinue }) {
+  return (
+    <StepShell eyebrow="Étape 4 sur 5 — Vérification administrative">
+      <ProgressSteps total={5} current={4} />
+      <div style={{ textAlign: "center", padding: "6px 0 22px" }}>
+        <div style={{
+          width: 58, height: 58, borderRadius: "50%", margin: "0 auto 16px",
+          background: success ? "var(--mil-dim)" : "rgba(242,99,74,0.14)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          {I(success ? "check" : "alert", { size: 28, color: success ? "var(--mil)" : "var(--danger)" })}
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "var(--white)", marginBottom: 8, fontFamily: "var(--font-display)" }}>
+          {success ? "Identité confirmée" : "Informations introuvables"}
+        </div>
+        <div style={{ fontSize: 13, color: "var(--ink-dim)", lineHeight: 1.6 }}>
+          {success
+            ? "Vérification de votre adresse Gmail en cours."
+            : "Ces informations ne correspondent à aucun étudiant enregistré par l'administration de votre établissement. Veuillez contacter votre administration pour vérifier votre inscription."}
+        </div>
+      </div>
+      {success ? (
+        <button className="btn btn-primary btn-block" onClick={onContinue}>Continuer</button>
+      ) : (
+        <button className="btn btn-ghost btn-block" onClick={onRetry}>Corriger mes informations</button>
+      )}
+    </StepShell>
+  );
+}
+
+function GmailCodeStep({ gmail, expectedCode, onBack, onConfirm }) {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState(false);
+
+  function handleConfirm() {
+    if (code.trim() === expectedCode) { setError(false); onConfirm(); }
+    else setError(true);
+  }
+
+  return (
+    <StepShell eyebrow="Étape 5 sur 5 — Confirmation Gmail">
+      <ProgressSteps total={5} current={5} />
+      <div style={{ fontSize: 13, color: "var(--ink-dim)", marginBottom: 16, lineHeight: 1.6 }}>
+        Un code de vérification a été envoyé à <strong style={{ color: "var(--ink)" }}>{gmail}</strong>.
+      </div>
+      <div className="hint-box">
+        Démo sans envoi réel d'e-mail — code simulé : <strong>{expectedCode}</strong>
+      </div>
+      <div className="field-label">Code de vérification</div>
+      <IconField
+        icon="key" type="text" value={code} maxLength={6}
+        onChange={(e) => { setCode(e.target.value); setError(false); }}
+        placeholder="000000"
+        style={{ letterSpacing: 3, fontSize: 16 }}
+      />
+      {error && <div style={{ fontSize: 12, color: "var(--danger)", marginTop: -8, marginBottom: 10 }}>Code incorrect. Réessayez.</div>}
+
+      <div className="btn-row" style={{ marginTop: 10 }}>
+        <button className="btn-icon" onClick={onBack}>{I("chevronLeft", { size: 16 })}</button>
+        <button className="btn btn-primary" disabled={code.trim().length !== 6} onClick={handleConfirm}>Confirmer</button>
+      </div>
+    </StepShell>
+  );
+}
+
+function SignupFlow({ onBack, onComplete }) {
+  const [step, setStep] = useState("etablissement");
+  const [etablissement, setEtablissement] = useState(null);
+  const [filiereNiveau, setFiliereNiveau] = useState(null);
+  const [identite, setIdentite] = useState(null);
+  const [checking, setChecking] = useState(false);
+  const [verified, setVerified] = useState(null);
+  const [expectedCode] = useState(() => String(Math.floor(100000 + Math.random() * 900000)));
+
+  function runVerification(dateNaissance) {
+    setChecking(true);
+    setTimeout(() => {
+      const list = OFFICIAL_STUDENTS[etablissement.id] || [];
+      const match = list.find((s) =>
+        normalize(s.nomComplet) === normalize(identite.nomComplet) &&
+        s.dateNaissance === dateNaissance &&
+        s.filiere === filiereNiveau.filiere &&
+        s.niveau === filiereNiveau.niveau
+      );
+      setVerified(!!match);
+      setChecking(false);
+      setStep("resultat");
+    }, 1000);
+  }
+
+  if (step === "etablissement") return <PickEtablissement onBack={onBack} onPick={(e) => { setEtablissement(e); setStep("filiere"); }} />;
+  if (step === "filiere") return <PickFiliereNiveau etablissement={etablissement} onBack={() => setStep("etablissement")} onPick={(fn) => { setFiliereNiveau(fn); setStep("identite1"); }} />;
+  if (step === "identite1") return <CreateAccountStep1 onBack={() => setStep("filiere")} onNext={(info) => { setIdentite(info); setStep("identite2"); }} />;
+  if (step === "identite2") return <CreateAccountStep2 onBack={() => setStep("identite1")} checking={checking} onVerify={runVerification} />;
+  if (step === "resultat") return <VerificationResult success={verified} onRetry={() => setStep("identite2")} onContinue={() => setStep("code")} />;
+  if (step === "code") return (
+    <GmailCodeStep
+      gmail={identite.gmail}
+      expectedCode={expectedCode}
+      onBack={() => setStep("resultat")}
+      onConfirm={() => onComplete({
+        role: "etudiant", etabId: etablissement.id, etablissementNom: etablissement.nom,
+        filiere: filiereNiveau.filiere, niveau: filiereNiveau.niveau,
+        nomComplet: identite.nomComplet, email: identite.gmail,
+      })}
+    />
+  );
+  return null;
+}
+
+function StudentLoginScreen({ onBack, onLogin }) {
+  const [email, setEmail] = useState("");
+  return (
+    <StepShell eyebrow="Connexion étudiant">
+      <div className="field-label">Adresse Gmail</div>
+      <IconField icon="mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="votre@gmail.com" />
+      <div className="field-label" style={{ marginTop: 4 }}>Mot de passe</div>
+      <IconField icon="lock" type="password" placeholder="••••••••" />
+      <div className="hint-box">Démo : connexion directe vers le compte étudiant de test (IBAM — ABF — L1).</div>
+      <div className="btn-row">
+        <button className="btn-icon" onClick={onBack}>{I("chevronLeft", { size: 16 })}</button>
+        <button
+          className="btn btn-primary"
+          disabled={!email.trim()}
+          onClick={() => onLogin({
+            role: "etudiant", etabId: "ibam", etablissementNom: "IBAM — Institut Burkinabè des Arts et Métiers",
+            filiere: "Assurance Banque Finance (ABF)", niveau: "L1",
+            nomComplet: "Ouédraogo Epiphane", email: email.trim() || "etudiant@gmail.com",
+          })}
+        >
+          Se connecter
+        </button>
+      </div>
+    </StepShell>
+  );
+}
+
+function AdminLoginScreen({ onBack, onLogin }) {
+  const [etabId, setEtabId] = useState(ETABLISSEMENTS_PRIVES[0].id);
+  const [email, setEmail] = useState("");
+  const allEtabs = [...ETABLISSEMENTS_PUBLICS, ...ETABLISSEMENTS_PRIVES];
+
+  return (
+    <StepShell eyebrow="Connexion administration">
+      <div className="subtitle" style={{ marginBottom: 18 }}>
+        Réservé au personnel administratif désigné par son établissement.
+      </div>
+      <div className="field-label">Établissement</div>
+      <select className="input" style={{ marginBottom: 16, cursor: "pointer" }} value={etabId} onChange={(e) => setEtabId(e.target.value)}>
+        {allEtabs.map((e) => <option key={e.id} value={e.id}>{e.nom}</option>)}
+      </select>
+      <div className="field-label">Identifiant administrateur</div>
+      <IconField icon="mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="administration@etablissement.bf" />
+      <div className="field-label" style={{ marginTop: 4 }}>Mot de passe</div>
+      <IconField icon="lock" type="password" placeholder="••••••••" />
+      <div className="btn-row">
+        <button className="btn-icon" onClick={onBack}>{I("chevronLeft", { size: 16 })}</button>
+        <button
+          className="btn btn-primary"
+          disabled={!email.trim()}
+          onClick={() => onLogin({ role: "administration", etabId, email: email.trim() || "administration@campuslink.bf" })}
+        >
+          Se connecter
+        </button>
+      </div>
+    </StepShell>
+  );
+}
+
+</script>
+<script type="text/babel" data-presets="react">
+
+// -----------------------------------------------------------------------
+// APP ÉTUDIANT — isolée à établissement + filière + niveau
+// -----------------------------------------------------------------------
+
+function DashboardSection({ session, unreadCount }) {
+  return (
+    <div>
+      <div className="hero-panel">
+        <div className="hero-eyebrow">{session.etablissementNom}</div>
+        <div className="hero-title">{session.filiere}</div>
+        <div className="hero-meta">{session.niveau} · {session.nomComplet}</div>
+      </div>
+      <div className="stat-card">
+        <div className="stat-label">Notifications non lues</div>
+        <div className="stat-value">{unreadCount}</div>
+      </div>
+      <div className="section-title">Navigation</div>
+      <div className="section-desc">
+        Utilisez la barre en bas pour accéder à votre profil, vos notes, les annonces et les événements — chaque
+        section n'affiche que le contenu de votre établissement, filière et niveau.
+      </div>
+    </div>
+  );
+}
+
+function ProfilSection({ session }) {
+  const rows = [
+    { label: "Nom complet", value: session.nomComplet },
+    { label: "Établissement", value: session.etablissementNom },
+    { label: "Filière", value: session.filiere },
+    { label: "Niveau", value: session.niveau },
+    { label: "E-mail", value: session.email },
+  ];
+  return (
+    <div>
+      <div className="section-title">Mon profil</div>
+      <div className="section-desc">Informations vérifiées par votre établissement.</div>
+      <div className="panel-box" style={{ padding: 0 }}>
+        {rows.map((r, i) => (
+          <div key={r.label} className="table-row" style={{ padding: "13px 18px" }}>
+            <span style={{ color: "var(--ink-faint)", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.04 }}>{r.label}</span>
+            <span style={{ fontWeight: 600, color: "var(--ink)" }}>{r.value}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 14, fontSize: 12, color: "var(--mil)" }}>
+        {I("shield", { size: 14 })} Identité confirmée par l'administration
+      </div>
+    </div>
+  );
+}
+
+function NotesSection({ notes, matieres }) {
+  return (
+    <div>
+      <div className="section-title">Mes notes</div>
+      <div className="section-desc">Vous seul voyez ces résultats.</div>
+      {matieres.length === 0 ? (
+        <div className="empty-state">Aucune matière encore configurée pour votre section.</div>
+      ) : matieres.map((m) => {
+        const val = notes[m];
+        const hasVal = val !== null && val !== undefined;
+        return (
+          <div key={m} className="row-card">
+            <div style={{ flex: 1 }}>
+              <div className="row-title">{m}</div>
+              <div className="row-sub">{hasVal ? "Publiée" : "Pas encore publiée"}</div>
+            </div>
+            <div className="row-value" style={{ color: hasVal ? (val >= 10 ? "var(--mil)" : "var(--danger)") : "var(--ink-faint)" }}>
+              {hasVal ? val : "—"}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function AnnoncesSection({ announcements }) {
+  const typeIcon = { cours: "calendar", note: "graduation", admin: "alert" };
+  const typeColor = { cours: "#6E8CFF", note: "var(--mil)", admin: "var(--harmattan)" };
+  return (
+    <div>
+      <div className="section-title">Annonces</div>
+      <div className="section-desc">Publiées par votre administration.</div>
+      {announcements.length === 0 ? (
+        <div className="empty-state">Aucune annonce pour le moment.</div>
+      ) : announcements.map((a) => (
+        <div key={a.id} className="row-card" style={{ alignItems: "flex-start" }}>
+          <div className="row-icon" style={{ background: `${typeColor[a.type] || "var(--harmattan)"}22` }}>
+            {I(typeIcon[a.type] || "alert", { size: 16, color: typeColor[a.type] || "var(--harmattan)" })}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div className="row-title">{a.title}</div>
+            <div className="row-sub">{a.body}</div>
+            <div style={{ fontSize: 11, color: "var(--ink-faint)", marginTop: 5, fontFamily: "var(--font-mono)" }}>{a.time}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EvenementsSection({ events }) {
+  return (
+    <div>
+      <div className="section-title">Événements</div>
+      <div className="section-desc">Organisés pour votre section.</div>
+      {events.length === 0 ? (
+        <div className="empty-state">Aucun événement à venir.</div>
+      ) : events.map((ev) => (
+        <div key={ev.id} className="row-card">
+          <div className="row-icon" style={{ background: "var(--harmattan-dim)" }}>
+            {I("party", { size: 16, color: "var(--harmattan)" })}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div className="row-title">{ev.title}</div>
+            <div className="row-sub">{ev.date} · {ev.lieu}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StudentApp({ session, config, announcements, events, onLogout }) {
+  const [tab, setTab] = useState("accueil");
+  const key = `${session.etabId}-${session.filiere}-${session.niveau}`;
+  const matieres = (config.matieres && config.matieres[key]) || [];
+  const notes = {};
+
+  const scoped = (list) => list.filter((a) => a.etabId === session.etabId && a.filiere === session.filiere && a.niveau === session.niveau);
+  const myAnnouncements = scoped(announcements);
+  const myEvents = scoped(events);
+
+  const tabs = [
+    { key: "accueil", label: "Accueil", icon: "home" },
+    { key: "profil", label: "Profil", icon: "user" },
+    { key: "notes", label: "Notes", icon: "graduation" },
+    { key: "annonces", label: "Annonces", icon: "bell" },
+    { key: "evenements", label: "Events", icon: "party" },
+  ];
+
+  return (
+    <div className="screen">
+      <div className="topbar">
+        <div className="topbar-brand">
+          <BrandMark size={30} />
+          <span className="topbar-title">CampusLink</span>
+        </div>
+        <button className="logout-btn" onClick={onLogout}>{I("logout", { size: 14 })} Quitter</button>
+      </div>
+
+      <div className="app-body">
+        {tab === "accueil" && <DashboardSection session={session} unreadCount={myAnnouncements.length} />}
+        {tab === "profil" && <ProfilSection session={session} />}
+        {tab === "notes" && <NotesSection notes={notes} matieres={matieres} />}
+        {tab === "annonces" && <AnnoncesSection announcements={myAnnouncements} />}
+        {tab === "evenements" && <EvenementsSection events={myEvents} />}
+      </div>
+
+      <div className="bottom-nav">
+        <div className="bottom-nav-inner">
+          {tabs.map((t) => (
+            <button key={t.key} className={"nav-btn" + (tab === t.key ? " active" : "")} onClick={() => setTab(t.key)}>
+              {I(t.icon, { size: 18, strokeWidth: tab === t.key ? 2.4 : 1.8 })}
+              <span className="nav-label">{t.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+</script>
+<script type="text/babel" data-presets="react">
+
+// -----------------------------------------------------------------------
+// APP ADMINISTRATION — chaque compte est rattaché à UN établissement
+// -----------------------------------------------------------------------
+
+function AdminNotesSection({ etablissement }) {
+  const [selFiliere, setSelFiliere] = useState(etablissement.filieres[0]);
+  const [selNiveau, setSelNiveau] = useState(etablissement.niveaux[0]);
+  const officialList = (OFFICIAL_STUDENTS[etablissement.id] || []).filter((s) => s.filiere === selFiliere && s.niveau === selNiveau);
+  const [students, setStudents] = useState(officialList.map((s, i) => ({ id: i, nomComplet: s.nomComplet, note: null })));
+  const fileInputRef = useRef(null);
+  const [importStatus, setImportStatus] = useState(null);
+  const [pendingImport, setPendingImport] = useState(null);
+
+  useEffect(() => {
+    const list = (OFFICIAL_STUDENTS[etablissement.id] || []).filter((s) => s.filiere === selFiliere && s.niveau === selNiveau);
+    setStudents(list.map((s, i) => ({ id: i, nomComplet: s.nomComplet, note: null })));
+    setImportStatus(null);
+  }, [selFiliere, selNiveau, etablissement.id]);
+
+  const gradedCount = useMemo(() => students.filter((s) => s.note !== null).length, [students]);
+
+  function handleFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: "binary" });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        const dataRows = rows.slice(1).filter((r) => r && r[0]);
+        const matched = [], unmatched = [];
+        dataRows.forEach((row) => {
+          const target = normalize(String(row[0] || ""));
+          const note = row[1];
+          const found = students.find((s) => normalize(s.nomComplet) === target);
+          if (found && note !== undefined && note !== "") matched.push({ studentId: found.id, note: Number(note) });
+          else unmatched.push(String(row[0]));
+        });
+        setPendingImport(matched);
+        setImportStatus({ matched: matched.length, unmatched, total: dataRows.length });
+      } catch {
+        setImportStatus({ error: "Fichier illisible. Vérifiez qu'il s'agit bien d'un .xlsx ou .csv." });
+      }
+    };
+    reader.readAsBinaryString(file);
+  }
+
+  function confirmImport() {
+    setStudents((prev) => prev.map((s) => {
+      const match = pendingImport.find((m) => m.studentId === s.id);
+      return match ? { ...s, note: match.note } : s;
+    }));
+    setImportStatus({ done: true, count: pendingImport.length });
+    setPendingImport(null);
+  }
+
+  function generateSampleFile() {
+    const data = [["Nom complet", "Note"], ...students.map((s) => [s.nomComplet, (Math.random() * 8 + 10).toFixed(1)])];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Notes");
+    XLSX.writeFile(wb, "exemple_notes.xlsx");
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 14, marginBottom: 20, flexWrap: "wrap" }}>
+       <select className="select-inline" value={selFiliere} onChange={(e) => setSelFiliere(e.target.value)}>
+          {etablissement.filieres.map((f) => <option key={f} value={f}>{f}</option>)}
+        </select>
+        <select className="select-inline" value={selNiveau} onChange={(e) => setSelNiveau(e.target.value)}>
+          {etablissement.niveaux.map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <div className="section-title">{selFiliere} — {selNiveau}</div>
+        <div style={{ fontSize: 13, color: "var(--ink-dim)" }}>{gradedCount} / {students.length} étudiants notés</div>
+        {students.length > 0 && (
+          <div className="progress-bar-track"><div className="progress-bar-fill" style={{ width: `${(gradedCount / students.length) * 100}%` }} /></div>
+        )}
+      </div>
+
+      {students.length === 0 ? (
+        <div className="empty-state">Aucun étudiant inscrit et vérifié pour {selFiliere} — {selNiveau}.</div>
+      ) : (
+        <>
+          <div className="panel-box">
+            <div className="panel-box-title">{I("fileSheet", { size: 18, color: "var(--harmattan)" })} Importer les notes (Excel / CSV)</div>
+            <p style={{ fontSize: 13, color: "var(--ink-dim)", marginBottom: 14, lineHeight: 1.5 }}>
+              Colonne A : nom complet. Colonne B : note. Ligne 1 réservée aux en-têtes.
+            </p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button className="btn btn-primary" onClick={() => fileInputRef.current?.click()}>{I("upload", { size: 15 })} Choisir un fichier</button>
+              <button className="btn btn-ghost" onClick={generateSampleFile}>Télécharger un exemple</button>
+              <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} style={{ display: "none" }} />
+            </div>
+
+            {importStatus?.error && <div style={{ marginTop: 14, color: "var(--danger)", fontSize: 13 }}>{importStatus.error}</div>}
+
+            {importStatus && !importStatus.error && !importStatus.done && (
+              <div style={{ marginTop: 16, background: "var(--night-2)", borderRadius: 9, padding: 14 }}>
+                <div style={{ fontSize: 13 }}><strong>{importStatus.matched}</strong> étudiant(s) reconnu(s) sur {importStatus.total} lignes.</div>
+                {importStatus.unmatched.length > 0 && <div style={{ fontSize: 12, color: "var(--danger)", marginTop: 6 }}>Non reconnus : {importStatus.unmatched.join(", ")}</div>}
+                <button className="btn btn-primary" style={{ marginTop: 12, padding: "9px 16px", fontSize: 13 }} onClick={confirmImport}>
+                  Confirmer et enregistrer {importStatus.matched} note(s)
+                </button>
+              </div>
+            )}
+
+            {importStatus?.done && (
+              <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 7, color: "var(--mil)", fontSize: 13 }}>
+                {I("check", { size: 15 })} {importStatus.count} notes enregistrées avec succès.
+              </div>
+            )}
+          </div>
+
+          <div className="panel-box">
+            <div className="panel-box-title">{I("users", { size: 18 })} Liste — {selFiliere} {selNiveau} ({students.length})</div>
+            <div style={{ maxHeight: 320, overflowY: "auto" }}>
+              {students.map((s, i) => (
+                <div key={s.id} className="table-row">
+                  <span>{i + 1}. {s.nomComplet}</span>
+                  <input
+                    type="number" step="0.5" min="0" max="20" className="note-input" placeholder="—"
+                    value={s.note ?? ""}
+                    onChange={(e) => setStudents((prev) => prev.map((st) => (st.id === s.id ? { ...st, note: e.target.value === "" ? null : Number(e.target.value) } : st)))}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function AdminAnnoncesSection({ etablissement, announcements, setAnnouncements }) {
+  const [notifFiliere, setNotifFiliere] = useState(etablissement.filieres[0]);
+  const [notifNiveau, setNotifNiveau] = useState(etablissement.niveaux[0]);
+  const [notifType, setNotifType] = useState("admin");
+  const [notifTitle, setNotifTitle] = useState("");
+  const [notifBody, setNotifBody] = useState("");
+  const [notifSent, setNotifSent] = useState(false);
+
+  const scoped = announcements.filter((a) => a.etabId === etablissement.id);
+
+  function publish() {
+    if (!notifTitle.trim()) return;
+    setAnnouncements((prev) => [
+      { id: Date.now(), etabId: etablissement.id, filiere: notifFiliere, niveau: notifNiveau, title: notifTitle.trim(), body: notifBody.trim(), time: "À l'instant", type: notifType },
+      ...prev,
+    ]);
+    setNotifTitle(""); setNotifBody("");
+    setNotifSent(true);
+    setTimeout(() => setNotifSent(false), 2500);
+  }
+
+  function remove(id) { setAnnouncements((prev) => prev.filter((a) => a.id !== id)); }
+
+  return (
+    <div>
+      <div className="panel-box">
+        <div className="panel-box-title">{I("bell", { size: 18, color: "var(--harmattan)" })} Publier une annonce</div>
+        <div style={{ display: "flex", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+          <select className="select-inline" value={notifFiliere} onChange={(e) => setNotifFiliere(e.target.value)}>
+            {etablissement.filieres.map((f) => <option key={f} value={f}>{f}</option>)}
+          </select>
+          <select className="select-inline" value={notifNiveau} onChange={(e) => setNotifNiveau(e.target.value)}>
+            {etablissement.niveaux.map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+          <select className="select-inline" style={{ flex: 1, minWidth: 140 }} value={notifType} onChange={(e) => setNotifType(e.target.value)}>
+            <option value="admin">Administratif</option>
+            <option value="cours">Cours</option>
+            <option value="note">Notes</option>
+          </select>
+        </div>
+        <input className="input" style={{ marginBottom: 10 }} type="text" value={notifTitle} onChange={(e) => setNotifTitle(e.target.value)} placeholder="Titre de l'annonce" />
+        <textarea className="textarea" rows={3} style={{ marginBottom: 14 }} value={notifBody} onChange={(e) => setNotifBody(e.target.value)} placeholder="Détails..." />
+        <button className="btn btn-primary" disabled={!notifTitle.trim()} onClick={publish}>Publier pour {notifFiliere} {notifNiveau}</button>
+        {notifSent && <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 7, color: "var(--mil)", fontSize: 13 }}>{I("check", { size: 15 })} Annonce publiée.</div>}
+      </div>
+
+      <div className="section-title" style={{ marginBottom: 12 }}>Historique ({scoped.length})</div>
+      {scoped.map((a) => (
+        <div key={a.id} className="row-card" style={{ alignItems: "flex-start" }}>
+          <div style={{ flex: 1 }}>
+            <span className="tag-pill">{a.filiere} {a.niveau}</span>
+            <div className="row-title" style={{ marginTop: 6 }}>{a.title}</div>
+          </div>
+          <button onClick={() => remove(a.id)} style={{ background: "none", border: "none", color: "var(--ink-faint)", cursor: "pointer" }}>{I("x", { size: 15 })}</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AdminApp({ session, announcements, setAnnouncements, onLogout }) {
+  const [adminTab, setAdminTab] = useState("notes");
+  const etablissement = findEtab(session.etabId) || ETABLISSEMENTS_PRIVES[0];
+
+  const tabs = [
+    { key: "notes", label: "Notes", icon: "graduation" },
+    { key: "annonces", label: "Annonces", icon: "bell" },
+  ];
+
+  return (
+    <div className="screen">
+      <div className="topbar">
+        <div className="topbar-brand">
+          <BrandMark size={30} />
+          <div>
+            <div className="topbar-title">CampusLink — Administration</div>
+            <div className="topbar-sub">{etablissement.nom}</div>
+          </div>
+        </div>
+        <button className="logout-btn" onClick={onLogout}>{I("logout", { size: 14 })} Quitter</button>
+      </div>
+
+      <div className="top-tabs">
+        <div className="top-tabs-inner">
+          {tabs.map((t) => (
+            <button key={t.key} className={"top-tab" + (adminTab === t.key ? " active" : "")} onClick={() => setAdminTab(t.key)}>
+              {I(t.icon, { size: 16, strokeWidth: adminTab === t.key ? 2.4 : 1.8 })} {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="app-body app-body-wide">
+        {adminTab === "notes" && <AdminNotesSection etablissement={etablissement} />}
+        {adminTab === "annonces" && <AdminAnnoncesSection etablissement={etablissement} announcements={announcements} setAnnouncements={setAnnouncements} />}
+      </div>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------
+// APP PRINCIPALE — redirection stricte, jamais de croisement des rôles
+// -----------------------------------------------------------------------
+
+function App() {
+  const [entry, setEntry] = useState("portal"); // portal | student-gateway | student-signup | student-login | admin-login
+  const [session, setSession] = useState(null);
+  const [announcements, setAnnouncements] = useState(initialAnnouncements);
+  const [events] = useState(initialEvents);
+  const [config] = useState({ matieres: {} });
+
+  if (!session) {
+    if (entry === "portal") {
+      return <EntryPortal onEnterStudent={() => setEntry("student-gateway")} onEnterAdmin={() => setEntry("admin-login")} />;
+    }
+    if (entry === "student-gateway") {
+      return <StudentGateway onBack={() => setEntry("portal")} onSignup={() => setEntry("student-signup")} onLogin={() => setEntry("student-login")} />;
+    }
+    if (entry === "student-signup") {
+      return <SignupFlow onBack={() => setEntry("student-gateway")} onComplete={setSession} />;
+    }
+    if (entry === "student-login") {
+      return <StudentLoginScreen onBack={() => setEntry("student-gateway")} onLogin={setSession} />;
+    }
+    if (entry === "admin-login") {
+      return <AdminLoginScreen onBack={() => setEntry("portal")} onLogin={setSession} />;
+    }
+  }
+
+  if (session?.role === "administration") {
+    return (
+      <AdminApp
+        session={session}
+        announcements={announcements}
+        setAnnouncements={setAnnouncements}
+        onLogout={() => { setSession(null); setEntry("portal"); }}
+      />
+    );
+  }
+
+  if (session?.role === "etudiant") {
+    return (
+      <StudentApp
+        session={session}
+        config={config}
+        announcements={announcements}
+        events={events}
+        onLogout={() => { setSession(null); setEntry("portal"); }}
+      />
+    );
+  }
+
+  return null;
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+window.__campuslinkBooted = true;
+
+</script>
+</body>
+</html>
+          {etablissement.filieres.map((f) => <option key={f} value={f}>{f}</option>)}
+        </select>
+        <select className="select-inline" value={selNiveau} onChange={(e) => setSelNiveau(e.target.value)}>
+          {etablissement.niveaux.map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <div className="section-title">{selFiliere} — {selNiveau}</div>
+        <div style={{ fontSize: 13, color: "var(--ink-dim)" }}>{gradedCount} / {students.length} étudiants notés</div>
+        {students.length > 0 && (
+          <div className="progress-bar-track"><div className="progress-bar-fill" style={{ width: `${(gradedCount / students.length) * 100}%` }} /></div>
+        )}
+      </div>
+
+      {students.length === 0 ? (
+        <div className="empty-state">Aucun étudiant inscrit et vérifié pour {selFiliere} — {selNiveau}.</div>
+      ) : (
+        <>
+          <div className="panel-box">
+            <div className="panel-box-title">{I("fileSheet", { size: 18, color: "var(--harmattan)" })} Importer les notes (Excel / CSV)</div>
+            <p style={{ fontSize: 13, color: "var(--ink-dim)", marginBottom: 14, lineHeight: 1.5 }}>
+              Colonne A : nom complet. Colonne B : note. Ligne 1 réservée aux en-têtes.
+            </p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button className="btn btn-primary" onClick={() => fileInputRef.current?.click()}>{I("upload", { size: 15 })} Choisir un fichier</button>
