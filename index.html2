@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CampusLink — Plateforme universitaire du Burkina Faso</title>
+<style>
+  /* ============================================================
+     DESIGN TOKENS
+     Palette : nuit sahélienne profonde + vert mil + or harmattan
+     — pas de crème/terracotta générique, pas de noir+vert acide.
+     Type : display condensé à forte carrure (Space Grotesk) +
+     texte (Inter) + mono utilitaire (JetBrains Mono) pour les codes
+     et identifiants — évoque le "système" administratif.
+     Signature : la "carte d'étudiant" en 3D légère qui s'incline
+     au survol, et le sélecteur d'établissement en grille de sceaux.
+     ============================================================ */
+  :root {
+    --night: #0B1220;
+    --night-2: #121B2E;
+    --panel: #161F35;
+    --panel-2: #1C2740;
+    --line: rgba(255,255,255,0.09);
+    --mil: #4ADE80;
+    --mil-dim: rgba(74, 222, 128, 0.14);
+    --harmattan: #F2B544;
+    --harmattan-dim: rgba(242, 181, 68, 0.14);
+    --clay: #E4633B;
+    --ink: #EAF0FB;
+    --ink-dim: #9BA9C4;
+    --ink-faint: #5C6B8A;
+    --white: #FFFFFF;
+    --danger: #F2634A;
+    --radius: 14px;
+    --radius-sm: 9px;
+    --font-display: 'Space Grotesk', 'Segoe UI', sans-serif;
+    --font-body: 'Inter', 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--night);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #root { min-height: 100vh; }
+
+  ::selection { background: var(--mil-dim); color: var(--white); }
+
+  input, select, textarea, button {
+    font-family: inherit;
+    color: inherit;
+  }
+
+  input:focus, select:focus, textarea:focus, button:focus-visible {
+    outline: 2px solid var(--mil);
+    outline-offset: 2px;
+  }
+
+  button { cursor: pointer; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--panel-2); border-radius: 8px; }
+
+  /* ---------- Layout utilities ---------- */
+  .screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .center-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bg-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow-mil { width: 420px; height: 420px; background: var(--mil); top: -140px; left: -120px; }
+  .glow-harmattan { width: 380px; height: 380px; background: var(--harmattan); bottom: -160px; right: -100px; opacity: 0.18; }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 34px;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .brand-mark {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--mil), #2FB86A);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--night);
+  }
+
+  .brand-name {
+    font-family: var(--font-display);
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--white);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 22px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--ink-dim);
+    line-height: 1.6;
+    margin-bottom: 26px;
+  }
+
+  .field-label {
+    font-size: 12px;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .input {
+    width: 100%;
+    padding: 13px 14px;
+    background: var(--night-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--ink);
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+  }
+  .input::placeholder { color: var(--ink-faint); }
+  .input:focus { border-color: var(--mil); }
+
+  .input-icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .input-icon-wrap svg {
+    position: absolute; left: 14px;
+    color: var(--ink-faint);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .input-icon-wrap .input { padding-left: 40px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 20px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.12s ease, opacity 0.12s ease, background 0.15s ease;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { cursor: not-allowed; opacity: 0.4; }
+
+  .btn-primary { background: var(--mil); color: var(--night); }
+  .btn-primary:not(:disabled):hover { background: #5FE894; }
+
+  .btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  .btn-ghost:not(:disabled):hover { border-color: var(--ink-faint); }
+
+  .btn-icon {
+    padding: 13px 15px;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+  }
+  .btn-icon:hover { border-color: var(--ink-faint); }
+
+  .btn-block { width: 100%; }
+
+  .btn-row { display: flex; gap: 10px; }
+  .btn-row .btn-primary, .btn-row .btn-ghost { flex: 1; }
+
+  .hint-box {
+    font-size: 12px;
+    color: var(--ink-dim);
+    background: var(--night-2);
+    border: 1px dashed var(--ink-faint);
+    border-radius: var(--radius-sm);
+    padding: 11px 13px;
+    margin-bottom: 18px;
+    line-height: 1.55;
+  }
+  .hint-box strong { color: var(--mil); font-family: var(--font-mono); letter-spacing: 0.08em; }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .chip {
+    padding: 9px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--line);
+    background: var(--night-2);
+    color: var(--ink-dim);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .chip:hover { border-color: var(--ink-faint); }
+  .chip.active { background: var(--mil); border-color: var(--mil); color: var(--night); }
+  .chip.active-alt { background: var(--harmattan); border-color: var(--harmattan); color: var(--night); }
+
+  .list-btn {
+    display: flex; align-items: center; gap: 14px;
+    width: 100%;
+    padding: 15px 16px;
+    text-align: left;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--night-2);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    margin-bottom: 9px;
+  }
+  .list-btn:hover { border-color: var(--mil); background: var(--panel-2); }
+
+  .seal {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--night);
+  }
+
+  .section-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 18px 0 10px;
+    padding-top: 4px;
+  }
+
+  .progress-track {
+    display: flex; gap: 5px; margin-bottom: 22px;
+  }
+  .progress-seg {
+    height: 3px; flex: 1; border-radius: 2px;
+    background: var(--line);
+  }
+  .progress-seg.done { background: var(--mil); }
+
+  /* ---------- App shell (student & admin) ---------- */
+  .topbar {
+    background: var(--night-2);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar-brand { display: flex; align-items: center; gap: 10px; }
+  .topbar-title { font-family: var(--font-display); font-size: 15px; color: var(--white); font-weight: 700; }
+  .topbar-sub { font-size: 11px; color: var(--ink-faint); }
+  .logout-btn {
+    background: transparent; border: none; color: var(--ink-faint);
+    display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer;
+  }
+  .logout-btn:hover { color: var(--ink); }
+
+  .app-body {
+    flex: 1;
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 22px 18px 100px;
+  }
+
+  .app-body-wide { max-width: 760px; }
+
+  .hero-panel {
+    position: relative;
+    background: linear-gradient(150deg, var(--panel-2), var(--night-2));
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 22px 24px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .hero-panel::before {
+    content: "";
+    position: absolute; top: -60%; right: -20%;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, var(--mil-dim), transparent 70%);
+  }
+  .hero-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mil); position: relative; z-index: 1; }
+  .hero-title { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--white); margin-top: 6px; position: relative; z-index: 1; }
+  .hero-meta { font-size: 12px; color: var(--ink-dim); margin-top: 4px; position: relative; z-index: 1; }
+
+  .stat-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 15px 16px;
+    margin-bottom: 20px;
+  }
+  .stat-label { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-value { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--harmattan); margin-top: 3px; }
+
+  .section-title { font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--white); margin-bottom: 3px; }
+  .section-desc { font-size: 13px; color: var(--ink-faint); margin-bottom: 18px; }
+
+  .row-card {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 9px;
+  }
+  .row-icon {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .row-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .row-sub { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+  .row-value { font-family: var(--font-display); font-size: 19px; font-weight: 700; }
+
+  .empty-state {
+    text-align: center; padding: 40px 20px;
+    color: var(--ink-faint); font-size: 13px;
+    background: var(--panel);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-sm);
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--night-2);
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: center;
+    z-index: 20;
+  }
+  .bottom-nav-inner { display: flex; max-width: 480px; width: 100%; }
+  .nav-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 11px 4px 9px;
+    background: transparent; border: none; cursor: pointer;
+    color: var(--ink-faint);
+    position: relative;
+  }
+  .nav-btn.active { color: var(--mil); }
+  .nav-btn.active::before {
+    content: "";
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 24px; height: 2px; background: var(--mil); border-radius: 2px;
+  }
+  .nav-label { font-size: 10px; font-weight: 600; }
+
+  /* Admin top tabs */
+  .top-tabs {
+    background: var(--night-2);
+    border-bottom: 1px solid var(--line);
+    display: flex; justify-content: center;
+  }
+  .top-tabs-inner { display: flex; max-width: 760px; width: 100%; }
+  .top-tab {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 14px 4px;
+    background: transparent; border: none; cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: var(--ink-faint);
+    font-size: 13px; font-weight: 600;
+  }
+  .top-tab.active { color: var(--mil); border-bottom-color: var(--mil); }
+
+  .panel-box {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+  .panel-box-title { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15px; color: var(--white); margin-bottom: 12px; }
+
+  .info-banner {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--mil-dim);
+    border: 1px solid rgba(74,222,128,0.3);
+    border-radius: var(--radius-sm);
+    padding: 12px 15px;
+    font-size: 12px;
+    color: #AFF5C8;
+    margin-bottom: 18px;
+    line-height: 1.5;
+  }
+
+  .select-inline {
+    padding: 10px 13px;
+    background: var(--night-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .progress-bar-track {
+    height: 7px; background: var(--night-2); border-radius: 4px; margin-top: 10px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; background: linear-gradient(90deg, var(--mil), var(--harmattan)); transition: width 0.3s ease;
+  }
+
+  .table-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 2px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .table-row:last-child { border-bottom: none; }
+
+  .note-input {
+    width: 60px; padding: 6px 8px;
+    background: var(--night-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13px; text-align: center;
+    color: var(--ink);
+  }
+
+  .tag-pill {
+    font-family: var(--font-mono);
+    font-size: 10px; font-weight: 700;
+    color: var(--mil);
+    background: var(--mil-dim);
+    padding: 3px 9px;
+    border-radius: 5px;
+    letter-spacing: 0.03em;
+  }
+
+  .split-portal {
+    display: flex; flex-direction: column; gap: 12px; margin-top: 6px;
+  }
+
+  .textarea {
+    width: 100%; padding: 12px 14px;
+    background: var(--night-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-size: 14px; color: var(--ink);
+    font-family: inherit; resize: vertical;
+    box-sizing: border-box;
+  }
+
+  @media (max-width: 480px) {
+    .card { padding: 26px 22px; }
+  }
+</style>
+</head>
+<body>
+<div id="root">
+  <div id="boot-fallback" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0B1220;color:#9BA9C4;font-family:system-ui,sans-serif;font-size:14px;text-align:center;padding:24px;">
+    <div>
+      <div style="font-weight:700;color:#EAF0FB;margin-bottom:8px;">Chargement de CampusLink…</div>
+      <div id="boot-msg">Connexion aux ressources nécessaires.</div>
+    </div>
+  </div>
+</div>
+<script>
+  // Sécurité anti-écran-noir : si l'app n'a pas démarré après 6 secondes,
+  // on explique pourquoi au lieu de laisser un fond vide.
+  window.__campuslinkBooted = false;
+  setTimeout(function () {
+    if (!window.__campuslinkBooted) {
+      var el = document.getElementById("boot-msg");
+      if (el) {
+        el.innerHTML = "Le chargement prend plus de temps que prévu.<br><br>" +
+          "Ce fichier a besoin d'une connexion Internet active (il charge React et les polices depuis des CDN).<br><br>" +
+          "Vérifiez votre connexion puis rechargez la page. Si le problème persiste, ouvrez ce fichier dans un navigateur de bureau (Chrome, Firefox).";
+      }
+    }
+  }, 6000);
+  window.addEventListener("error", function (e) {
+    var el = document.getElementById("boot-msg");
+    if (el && !window.__campuslinkBooted) {
+      el.innerHTML = "Une ressource n'a pas pu être chargée (" + (e.message || "erreur inconnue") + ").<br><br>Vérifiez votre connexion Internet et rechargez la page.";
+    }
+  });
+</script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useMemo, useEffect } = React;
+
+// =============================================================================
+// DONNÉES — Établissements d'enseignement supérieur du Burkina Faso
+// Liste représentative des universités publiques et privées reconnues par le
+// MESRI. Chaque établissement gère sa propre base d'étudiants, ses filières
+
+// et ses niveaux — totalement cloisonné des autres.
+// =============================================================================
+
+const ETABLISSEMENTS_PUBLICS = [
+  { id: "ujkz", nom: "Université Joseph KI-ZERBO", ville: "Ouagadougou", sigle: "UJKZ",
+    filieres: ["Droit", "Économie et Gestion", "Lettres et Sciences Humaines", "Sciences de la Santé", "Sciences Exactes et Appliquées"],
+    niveaux: ["L1", "L2", "L3", "M1", "M2"] },
+  { id: "uts", nom: "Université Thomas SANKARA", ville: "Ouagadougou", sigle: "UTS",
+    filieres: ["Sciences Économiques", "Sciences Juridiques et Politiques", "Sciences et Techniques"],
+    niveaux: ["L1", "L2", "L3", "M1", "M2"] },
+  { id: "unb", nom: "Université Nazi BONI", ville: "Bobo-Dioulasso", sigle: "UNB",
+    filieres: ["Sciences Agronomiques", "Ingénierie", "Sciences de la Santé", "Sciences Économiques et Gestion"],
+    niveaux: ["L1", "L2", "L3", "M1", "M2"] },
+  { id: "unz", nom: "Université Norbert ZONGO", ville: "Koudougou", sigle: "UNZ",
+    filieres: ["Sciences de l'Éducation", "Lettres et Sciences Humaines", "Sciences Économiques et de Gestion"],
+    niveaux: ["L1", "L2", "L3", "M1", "M2"] },
+  { id: "udd", nom: "Université de Dédougou", ville: "Dédougou", sigle: "UDD",
+    filieres: ["Sciences Appliquées", "Sciences Économiques et de Gestion"],
+    niveaux: ["L1", "L2", "L3"] },
+  { id: "uouahigouya", nom: "Université de Ouahigouya", ville: "Ouahigouya", sigle: "UO",
+    filieres: ["Sciences Économiques et de Gestion", "Lettres et Sciences Humaines"],
+    niveaux: ["L1", "L2", "L3"] },
+  { id: "ufada", nom: "Université de Fada N'Gourma", ville: "Fada N'Gourma", sigle: "UFDG",
+    filieres: ["Sciences Économiques et de Gestion", "Agronomie"],
+    niveaux: ["L1", "L2", "L3"] },
+];
+
+const ETABLISSEMENTS_PRIVES = [
+  { id: "ibam", nom: "IBAM — Institut Burkinabè des Arts et Métiers", ville: "Ouagadougou", sigle: "IBAM",
+    filieres: ["Assurance Banque Finance (ABF)", "Marketing", "Comptabilité", "Informatique"],
+    niveaux: ["L1", "L2", "L3", "M1", "M2"] },
+  { id: "usta", nom: "Université Saint Thomas d'Aquin", ville: "Ouagadougou", sigle: "USTA",
+    filieres: ["Droit", "Sciences Économiques et de Gestion", "Communication", "Théologie"],
+    niveaux: ["L1", "L2", "L3", "M1", "M2"] },
+  { id: "aube", nom: "Université Aube Nouvelle", ville: "Ouagadougou", sigle: "UAN",
+    filieres: ["Informatique", "Gestion", "Santé", "Communication"],
+    niveaux: ["L1", "L2", "L3", "M1", "M2"] },
+  { id: "istic", nom: "ISTIC — Institut des Sciences et Techniques de l'Information et de la Communication", ville: "Ouagadougou", sigle: "ISTIC",
+    filieres: ["Journalisme", "Communicati
