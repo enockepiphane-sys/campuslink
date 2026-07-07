@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CampusLink — Plateforme Universitaire</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  .brand-gradient { background: linear-gradient(135deg, #0f766e 0%, #0891b2 100%); }
+  .brand-text { background: linear-gradient(135deg, #0f766e, #0891b2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .fade-in { animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: translateY(0);} }
+  .card-hover { transition: all .2s ease; }
+  .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(15,118,110,.12); }
+  .no-scrollbar::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+<!-- ============ APP CONTAINER (mobile étudiant) ============ -->
+<div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-xl relative overflow-hidden">
+
+<!-- ---------- 1. SÉLECTION ÉTABLISSEMENT ---------- -->
+<section id="screen-univ" class="screen active fade-in">
+  <div class="brand-gradient text-white px-6 pt-12 pb-10 rounded-b-3xl">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center text-2xl">🎓</div>
+      <div>
+        <h1 class="text-2xl font-extrabold">CampusLink</h1>
+        <p class="text-sm text-white/80">Votre campus, connecté.</p>
+      </div>
+    </div>
+    <h2 class="text-lg font-semibold">Sélectionnez votre établissement</h2>
+    <p class="text-sm text-white/80 mt-1">Universités publiques & privées du Burkina Faso</p>
+  </div>
+
+  <div class="p-5 space-y-3" id="univ-list"></div>
+</section>
+
+<!-- ---------- 2. FILIÈRE ---------- -->
+<section id="screen-filiere" class="screen">
+  <div class="px-5 pt-10 pb-6 border-b">
+    <button onclick="show('screen-univ')" class="text-teal-700 text-sm mb-3">← Retour</button>
+    <h2 class="text-xl font-bold" id="univ-name-title"></h2>
+    <p class="text-slate-500 text-sm mt-1">Choisissez votre filière</p>
+  </div>
+  <div class="p-5 space-y-3" id="filiere-list"></div>
+</section>
+
+<!-- ---------- 3. NIVEAU ---------- -->
+<section id="screen-niveau" class="screen">
+  <div class="px-5 pt-10 pb-6 border-b">
+    <button onclick="show('screen-filiere')" class="text-teal-700 text-sm mb-3">← Retour</button>
+    <h2 class="text-xl font-bold">Niveau d'étude</h2>
+    <p class="text-slate-500 text-sm mt-1" id="filiere-name-title"></p>
+  </div>
+  <div class="p-5 grid grid-cols-2 gap-3">
+    <button onclick="selectNiveau('L1')" class="p-6 rounded-2xl border-2 border-slate-200 hover:border-teal-600 font-bold text-lg card-hover">L1</button>
+    <button onclick="selectNiveau('L2')" class="p-6 rounded-2xl border-2 border-slate-200 hover:border-teal-600 font-bold text-lg card-hover">L2</button>
+    <button onclick="selectNiveau('L3')" class="p-6 rounded-2xl border-2 border-slate-200 hover:border-teal-600 font-bold text-lg card-hover">L3</button>
+    <button onclick="selectNiveau('M1')" class="p-6 rounded-2xl border-2 border-slate-200 hover:border-teal-600 font-bold text-lg card-hover">M1</button>
+    <button onclick="selectNiveau('M2')" class="p-6 rounded-2xl border-2 border-slate-200 hover:border-teal-600 font-bold text-lg card-hover col-span-2">M2</button>
+  </div>
+</section>
+
+<!-- ---------- 4. INSCRIPTION - IDENTITÉ ---------- -->
+<section id="screen-identite" class="screen">
+  <div class="px-5 pt-10 pb-6">
+    <button onclick="show('screen-niveau')" class="text-teal-700 text-sm mb-3">← Retour</button>
+    <h2 class="text-2xl font-bold">Créer votre compte</h2>
+    <p class="text-slate-500 text-sm mt-1">Étape 1 / 3</p>
+  </div>
+  <form onsubmit="event.preventDefault(); show('screen-birth')" class="px-5 space-y-4">
+    <div>
+      <label class="text-sm font-medium">Nom complet</label>
+      <input required id="in-name" type="text" placeholder="Ex : Ouédraogo Salif"
+        class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none"/>
+    </div>
+    <div>
+      <label class="text-sm font-medium">Adresse Gmail</label>
+      <input required id="in-email" type="email" placeholder="votre.email@gmail.com"
+        class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none"/>
+    </div>
+    <button class="w-full brand-gradient text-white font-semibold py-3.5 rounded-xl mt-4">Continuer</button>
+  </form>
+</section>
+
+<!-- ---------- 4b. INSCRIPTION - NAISSANCE ---------- -->
+<section id="screen-birth" class="screen">
+  <div class="px-5 pt-10 pb-6">
+    <button onclick="show('screen-identite')" class="text-teal-700 text-sm mb-3">← Retour</button>
+    <h2 class="text-2xl font-bold">Vérification d'identité</h2>
+    <p class="text-slate-500 text-sm mt-1">Étape 2 / 3</p>
+  </div>
+  <form onsubmit="event.preventDefault(); verifyAdmin()" class="px-5 space-y-4">
+    <div>
+      <label class="text-sm font-medium">Date de naissance</label>
+      <input required id="in-birth" type="date"
+        class="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 outline-none"/>
+    </div>
+    <div class="bg-teal-50 border border-teal-100 rounded-xl p-4 text-sm text-teal-900">
+      🔒 Vos informations seront comparées à la liste officielle transmise par votre administration.
+    </div>
+    <button class="w-full brand-gradient text-white font-semibold py-3.5 rounded-xl mt-4">Vérifier mon identité</button>
+  </form>
+</section>
+
+<!-- ---------- 4c. RÉSULTAT VÉRIFICATION ---------- -->
+<section id="screen-verify" class="screen">
+  <div class="p-6 pt-16 text-center" id="verify-content"></div>
+</section>
+
+<!-- ---------- 5. CODE GMAIL ---------- -->
+<section id="screen-code" class="screen">
+  <div class="px-5 pt-10 pb-6">
+    <h2 class="text-2xl font-bold">Entrez le code reçu</h2>
+    <p class="text-slate-500 text-sm mt-1">Un code à 6 chiffres a été envoyé à <span id="email-echo" class="font-semibold text-teal-700"></span></p>
+  </div>
+  <form onsubmit="event.preventDefault(); confirmCode()" class="px-5 space-y-4">
+    <input required id="in-code" maxlength="6" inputmode="numeric" placeholder="••••••"
+      class="w-full text-center tracking-[.8em] text-2xl font-bold py-4 rounded-xl border border-slate-200 focus:border-teal-600 outline-none"/>
+    <p class="text-xs text-center text-slate-400">Astuce démo : le code est <b>123456</b></p>
+    <button class="w-full brand-gradient text-white font-semibold py-3.5 rounded-xl">Confirmer</button>
+  </form>
+</section>
+
+<!-- ---------- 6. DASHBOARD ---------- -->
+<section id="screen-dash" class="screen">
+  <header class="brand-gradient text-white px-5 pt-10 pb-8 rounded-b-3xl">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-white/80 text-sm">Bienvenue,</p>
+        <h2 class="text-xl font-bold" id="dash-name">Étudiant</h2>
+        <p class="text-white/70 text-xs mt-1" id="dash-meta"></p>
+      </div>
+      <button onclick="show('screen-profile')" class="w-11 h-11 bg-white/20 rounded-full flex items-center justify-center text-lg">👤</button>
+    </div>
+  </header>
+
+  <main class="p-5 space-y-6 pb-24">
+    <div>
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-bold">📢 Dernières annonces</h3>
+        <button onclick="show('screen-annonces')" class="text-xs text-teal-700">Voir tout</button>
+      </div>
+      <div class="space-y-2">
+        <div class="p-4 bg-amber-50 border-l-4 border-amber-500 rounded-lg">
+          <p class="font-semibold text-sm">Dates des examens semestriels</p>
+          <p class="text-xs text-slate-600 mt-1">Publié il y a 2h</p>
+        </div>
+        <div class="p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
+          <p class="font-semibold text-sm">Fermeture exceptionnelle vendredi</p>
+          <p class="text-xs text-slate-600 mt-1">Publié hier</p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-bold">📅 Prochains événements</h3>
+        <button onclick="show('screen-events')" class="text-xs text-teal-700">Voir tout</button>
+      </div>
+      <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+        <div class="min-w-[220px] bg-white border rounded-2xl overflow-hidden card-hover">
+          <div class="h-24 bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-4xl">🎤</div>
+          <div class="p-3">
+            <p class="font-semibold text-sm">Conférence IA & Afrique</p>
+            <p class="text-xs text-slate-500 mt-1">15 déc • 14h • Amphi A</p>
+          </div>
+        </div>
+        <div class="min-w-[220px] bg-white border rounded-2xl overflow-hidden card-hover">
+          <div class="h-24 bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-4xl">💼</div>
+          <div class="p-3">
+            <p class="font-semibold text-sm">Forum de l'emploi 2026</p>
+            <p class="text-xs text-slate-500 mt-1">22 déc • 9h • Hall central</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-bold">📊 Dernières notes</h3>
+        <button onclick="show('screen-notes')" class="text-xs text-teal-700">Voir tout</button>
+      </div>
+      <div class="bg-white border rounded-2xl divide-y">
+        <div class="flex justify-between p-4">
+          <div><p class="font-medium text-sm">Algorithmique</p><p class="text-xs text-slate-500">Publié 12 déc</p></div>
+          <div class="text-right"><p class="font-bold text-teal-700">16/20</p><p class="text-xs text-green-600">Validé</p></div>
+        </div>
+        <div class="flex justify-between p-4">
+          <div><p class="font-medium text-sm">Base de données</p><p class="text-xs text-slate-500">Publié 10 déc</p></div>
+          <div class="text-right"><p class="font-bold text-teal-700">14/20</p><p class="text-xs text-green-600">Validé</p></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t px-2 py-2 grid grid-cols-5 text-xs">
+    <button onclick="show('screen-dash')" class="flex flex-col items-center gap-0.5 text-teal-700"><span>🏠</span>Accueil</button>
+    <button onclick="show('screen-notes')" class="flex flex-col items-center gap-0.5 text-slate-500"><span>📊</span>Notes</button>
+    <button onclick="show('screen-events')" class="flex flex-col items-center gap-0.5 text-slate-500"><span>📅</span>Événements</button>
+    <button onclick="show('screen-annonces')" class="flex flex-col items-center gap-0.5 text-slate-500"><span>📢</span>Annonces</button>
+    <button onclick="show('screen-profile')" class="flex flex-col items-center gap-0.5 text-slate-500"><span>👤</span>Profil</button>
+  </nav>
+</section>
+
+<!-- ---------- NOTES ---------- -->
+<section id="screen-notes" class="screen">
+  <header class="px-5 pt-10 pb-5 border-b">
+    <button onclick="show('screen-dash')" class="text-teal-700 text-sm mb-2">← Retour</button>
+    <h2 class="text-2xl font-bold">Mes notes</h2>
+    <p class="text-sm text-slate-500">Semestre en cours</p>
+  </header>
+  <div class="p-5 pb-24">
+    <table class="w-full text-sm bg-white rounded-2xl border overflow-hidden">
+      <thead class="bg-slate-100 text-slate-600">
+        <tr><th class="text-left p-3">Module</th><th class="p-3">Note</th><th class="p-3">Statut</th></tr>
+      </thead>
+      <tbody class="divide-y">
+        <tr><td class="p-3">Algorithmique</td><td class="p-3 text-center font-bold text-teal-700">16</td><td class="p-3 text-center text-green-600">✓ Validé</td></tr>
+        <tr><td class="p-3">Base de données</td><td class="p-3 text-center font-bold text-teal-700">14</td><td class="p-3 text-center text-green-600">✓ Validé</td></tr>
+        <tr><td class="p-3">Anglais</td><td class="p-3 text-center font-bold text-teal-700">12</td><td class="p-3 text-center text-green-600">✓ Validé</td></tr>
+        <tr><td class="p-3">Réseaux</td><td class="p-3 text-center font-bold text-amber-600">09</td><td class="p-3 text-center text-red-600">✗ Rattrapage</td></tr>
+        <tr><td class="p-3">Statistiques</td><td class="p-3 text-center font-bold text-teal-700">15</td><td class="p-3 text-center text-green-600">✓ Validé</td></tr>
+      </tbody>
+    </table>
+    <div class="mt-4 p-4 bg-teal-50 rounded-xl">
+      <p class="text-sm text-teal-800">Moyenne générale : <b class="text-lg">13.20 / 20</b></p>
+    </div>
+  </div>
+</section>
+
+<!-- ---------- ÉVÉNEMENTS ---------- -->
+<section id="screen-events" class="screen">
+  <header class="px-5 pt-10 pb-5 border-b">
+    <button onclick="show('screen-dash')" class="text-teal-700 text-sm mb-2">← Retour</button>
+    <h2 class="text-2xl font-bold">Événements</h2>
+  </header>
+  <div class="p-5 space-y-4 pb-24">
+    <article class="bg-white border rounded-2xl overflow-hidden card-hover">
+      <div class="h-32 bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-6xl">🎤</div>
+      <div class="p-4">
+        <span class="text-xs bg-teal-100 text-teal-700 px-2 py-1 rounded-full">Conférence</span>
+        <h3 class="font-bold mt-2">IA & développement en Afrique</h3>
+        <p class="text-sm text-slate-600 mt-1">Panel de chercheurs africains sur l'intelligence artificielle appliquée au continent.</p>
+        <div class="mt-3 text-xs text-slate-500 space-y-1">
+          <p>📅 15 décembre 2026 · 🕒 14h00</p><p>📍 Amphithéâtre A</p>
+        </div>
+      </div>
+    </article>
+    <article class="bg-white border rounded-2xl overflow-hidden card-hover">
+      <div class="h-32 bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-6xl">💼</div>
+      <div class="p-4">
+        <span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">Forum d'emploi</span>
+        <h3 class="font-bold mt-2">Forum de l'emploi 2026</h3>
+        <p class="text-sm text-slate-600 mt-1">Rencontrez plus de 40 entreprises qui recrutent des stagiaires et jeunes diplômés.</p>
+        <div class="mt-3 text-xs text-slate-500 space-y-1">
+          <p>📅 22 décembre 2026 · 🕒 09h00</p><p>📍 Hall central</p>
+        </div>
+      </div>
+    </article>
+    <article class="bg-white border rounded-2xl overflow-hidden card-hover">
+      <div class="h-32 bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-6xl">🏆</div>
+      <div class="p-4">
+        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">Concours</span>
+        <h3 class="font-bold mt-2">Hackathon CampusLink</h3>
+        <p class="text-sm text-slate-600 mt-1">48h pour construire une solution numérique universitaire.</p>
+        <div class="mt-3 text-xs text-slate-500 space-y-1">
+          <p>📅 5 janvier 2027 · 🕒 08h00</p><p>📍 Laboratoire informatique</p>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ---------- ANNONCES ---------- -->
+<section id="screen-annonces" class="screen">
+  <header class="px-5 pt-10 pb-5 border-b">
+    <button onclick="show('screen-dash')" class="text-teal-700 text-sm mb-2">← Retour</button>
+    <h2 class="text-2xl font-bold">Annonces</h2>
+  </header>
+  <div class="p-5 space-y-3 pb-24">
+    <div class="p-4 bg-white border-l-4 border-amber-500 rounded-lg shadow-sm">
+      <div class="flex justify-between"><p class="font-semibold">Dates des examens semestriels</p><span class="text-xs text-slate-400">2h</span></div>
+      <p class="text-sm text-slate-600 mt-2">Les examens du 1er semestre se dérouleront du 15 au 30 janvier 2027. Consultez le planning affiché sur l'ENT.</p>
+      <span class="inline-block mt-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">Examens</span>
+    </div>
+    <div class="p-4 bg-white border-l-4 border-blue-500 rounded-lg shadow-sm">
+      <div class="flex justify-between"><p class="font-semibold">Fermeture exceptionnelle vendredi</p><span class="text-xs text-slate-400">1j</span></div>
+      <p class="text-sm text-slate-600 mt-2">L'université sera fermée le vendredi 12 décembre pour l'assemblée générale du personnel.</p>
+      <span class="inline-block mt-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Administration</span>
+    </div>
+    <div class="p-4 bg-white border-l-4 border-red-500 rounded-lg shadow-sm">
+      <div class="flex justify-between"><p class="font-semibold">Paiement des frais de scolarité</p><span class="text-xs text-slate-400">3j</span></div>
+      <p class="text-sm text-slate-600 mt-2">Dernier délai le 20 décembre. Passé cette date, l'accès aux notes sera suspendu.</p>
+      <span class="inline-block mt-2 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Urgent</span>
+    </div>
+  </div>
+</section>
+
+<!-- ---------- PROFIL ---------- -->
+<section id="screen-profile" class="screen">
+  <header class="brand-gradient text-white px-5 pt-10 pb-16 rounded-b-3xl text-center">
+    <button onclick="show('screen-dash')" class="text-white/80 text-sm absolute left-5 top-10">← Retour</button>
+    <div class="w-20 h-20 mx-auto bg-white/20 rounded-full flex items-center justify-center text-4xl mb-3">👤</div>
+    <h2 class="font-bold text-lg" id="prof-name"></h2>
+    <p class="text-white/80 text-sm" id="prof-email"></p>
+  </header>
+  <div class="p-5 space-y-3 -mt-8 pb-24">
+    <div class="bg-white border rounded-2xl p-4 space-y-3 shadow-sm">
+      <div><p class="text-xs text-slate-500">Établissement</p><p class="font-semibold" id="prof-univ"></p></div>
+      <div><p class="text-xs text-slate-500">Filière</p><p class="font-semibold" id="prof-fil"></p></div>
+      <div><p class="text-xs text-slate-500">Niveau</p><p class="font-semibold" id="prof-niv"></p></div>
+    </div>
+    <button class="w-full bg-white border rounded-xl p-4 text-left flex justify-between items-center">🔔 Notifications <span>›</span></button>
+    <button class="w-full bg-white border rounded-xl p-4 text-left flex justify-between items-center opacity-60">📚 Bibliothèque numérique <span class="text-xs bg-slate-100 px-2 py-0.5 rounded">Bientôt</span></button>
+    <button class="w-full bg-white border rounded-xl p-4 text-left flex justify-between items-center opacity-60">💬 Messagerie <span class="text-xs bg-slate-100 px-2 py-0.5 rounded">Bientôt</span></button>
+    <button class="w-full bg-white border rounded-xl p-4 text-left flex justify-between items-center opacity-60">💼 Offres de stages <span class="text-xs bg-slate-100 px-2 py-0.5 rounded">Bientôt</span></button>
+    <button onclick="show('screen-univ')" class="w-full bg-red-50 text-red-600 rounded-xl p-4 font-medium">Se déconnecter</button>
+    <div class="pt-4 text-center">
+      <button onclick="toggleAdmin()" class="text-xs text-slate-400 underline">Accès administrateur CampusLink</button>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<!-- ============ INTERFACE ADMIN WEB ============ -->
+<div id="admin" class="hidden fixed inset-0 bg-slate-100 overflow-auto z-50">
+  <div class="flex min-h-screen">
+    <aside class="w-64 bg-slate-900 text-white p-5 hidden md:block">
+      <div class="flex items-center gap-2 mb-8">
+        <div class="w-10 h-10 brand-gradient rounded-lg flex items-center justify-center">🎓</div>
+        <div><p class="font-bold">CampusLink</p><p class="text-xs text-slate-400">Admin panel</p></div>
+      </div>
+      <nav class="space-y-1 text-sm">
+        <a class="block px-3 py-2 bg-white/10 rounded-lg">📊 Tableau de bord</a>
+        <a class="block px-3 py-2 
